@@ -1,3 +1,72 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+#Paso 1: Construcción del espacio de escalas
+def espacio_escalas(imagen, octavas, intervalos):
+    espacioDescalas = []
+    # Parámetros iniciales
+    sigma = 1.6
+    k = 2**(1/intervalos)
+
+    #  diferentes escalas y octavas
+    for octava in range(octavas):
+        for intervalo in range(intervalos+3):
+            sigma_actual = sigma * (k**intervalo)
+            tam = int(6 * sigma_actual + 1)
+            if tam % 2 == 0:
+                tam += 1
+
+            gauss = cv2.GaussianBlur(imagen, (tam, tam), sigma_actual)
+            espacioDescalas.append(gauss)
+        imagen = cv2.resize(imagen, (int(imagen.shape[1] / 2), int(imagen.shape[0] / 2)))
+
+    return espacioDescalas
+
+
+#Paso 2: Localización de puntos clave mediante las
+#diferencias de gaussianas
+def difgaussianas(espacioDescalas, octavas, intervalos):
+    piramideG = []
+
+    for octava in range(octavas):
+        for intervalo in range(intervalos + 2):
+            i1 = octava * (intervalos + 3)+intervalo
+            i2 = octava * (intervalos + 3)+intervalo+1
+
+            dog = espacioDescalas[i2] - espacioDescalas[i1]
+            piramideG.append(dog)
+
+    return piramideG
+
+imagen = cv2.imread('2.jpg')
+gris = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
+octavas = 4
+intervalos = 2
+
+espacio =espacio_escalas(gris, octavas, intervalos)
+piramide= difgaussianas(espacio, octavas, intervalos)
+####################################################
+fig, axs = plt.subplots(octavas, intervalos + 3, figsize=(15, 10))
+for i in range(octavas):
+    for j in range(intervalos + 3):
+        idx = i * (intervalos + 3) + j
+        axs[i, j].imshow(espacio[idx], cmap='gray')
+        axs[i, j].axis('off')
+        axs[i, j].set_title(f'{i + 1}° octava')
+fig.suptitle('Espacio de escalas', fontsize=16)
+plt.show()
+####################################################
+fig1, axsis = plt.subplots(octavas, intervalos + 2, figsize=(15, 10))
+for i in range(octavas):
+    for j in range(intervalos + 2):
+        idx = i * (intervalos + 2) + j
+        axsis[i, j].imshow(piramide[idx], cmap='gray')
+        axsis[i, j].axis('off')
+fig1.suptitle('Diferencias de gaussianas', fontsize=16)
+plt.show()
+
+
 #Paso 3: Sacar la orientación para conseguir la invarianza
 def asignar_orientaciones(piramide, octavas, intervalos):
     keypoints = []
