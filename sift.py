@@ -122,7 +122,41 @@ plt.xlabel('Bin de Orientación')
 plt.ylabel('Magnitudes')
 plt.show()
 
+# ╔═════════════════════════╗
+# ║           Liz           ║
+# ╚═════════════════════════╝
+import cv2
+import matplotlib.pyplot as plt
+%matplotlib inline
+import numpy as np
+from google.colab.patches import cv2_imshow
 
+#reading image
+img1= cv2.imread('2.jpg')
+gray1=cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+gray1=cv2.resize(gray1,(300,300))
+
+#keypoints
+sift = cv2.xfeatures2d.SIFT_create()
+keypoints_1, descriptors_1 = sift.detectAndCompute(gray1,None)
+
+img_1 = cv2.drawKeypoints(gray1,keypoints_1,img1)
+
+
+magnitudes = np.sqrt(descriptors_1[:, 0] ** 2 + descriptors_1[:, 1] ** 2)
+orientaciones = np.arctan2(descriptors_1[:, 1], descriptors_1[:, 0])
+
+# Crear un histograma de orientaciones ponderadas por magnitudes
+histograma_orientaciones, bins = np.histogram(orientaciones, bins=360, range=(0, np.pi/2), weights=magnitudes)
+
+# Visualizar el histograma
+plt.bar(bins[:-1], histograma_orientaciones, width=(2 * np.pi) / 360)
+plt.title('Histograma de Orientaciones')
+plt.xlabel('Orientación')
+plt.ylabel('Magnitudes')
+plt.show()
+
+cv2_imshow(img_1)
 
 img1 = cv2.imread('5.jpg')
 img2 = cv2.imread('6.jpg')
